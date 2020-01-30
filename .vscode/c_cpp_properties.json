@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/yq/mbzirc/mavros_files/sitl_ws_0121/devel/include/**",
+                "/opt/ros/melodic/include/**",
+                "/home/yq/mbzirc/mavros_files/sitl_ws_0121/src/darknet_ros/darknet_ros/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}
