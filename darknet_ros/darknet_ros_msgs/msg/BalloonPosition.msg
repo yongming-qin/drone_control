@@ -1,3 +1,4 @@
 float64 probability
+float64 distance_to_drone
 geometry_msgs/Point point
 string Class

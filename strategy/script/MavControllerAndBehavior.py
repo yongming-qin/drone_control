@@ -90,18 +90,19 @@ class MavController:
                 self.pose.position.x, self.pose.position.y, self.pose.position.z,
                 angles[0], angles[1], angles[2])
 
-    def goto_position_by_vel(self, x, y, z, vyaw):
+    def go_to_position_by_vel(self, x, y, z, vyaw):
+        reach_radius = 0.5
         while not rospy.is_shutdown():
             dx = x - self.pose.position.x
             dy = y - self.pose.position.y
             dz = z - self.pose.position.z
-            if (math.fabs(dx) < 0.2 and math.fabs(dy) < 0.2 and math.fabs(dz) < 0.2):
+            if (math.fabs(dx) < reach_radius and math.fabs(dy) < reach_radius and math.fabs(dz) < reach_radius):
                 self.set_vel(0, 0, 0, avz=0)
-                return(True)
+                break
             def velocity(input):
                 k = 0.5
                 limit = 1
-                if math.fabs(input) >= 0.2:
+                if math.fabs(input) >= reach_radius:
                     output = k*input if math.fabs(k*input) < limit else math.copysign(limit,k*input)
                     # print("velocity: ", output)
                     return(output)
@@ -109,6 +110,8 @@ class MavController:
                     return 0
 
             self.set_vel(velocity(dx), velocity(dy), velocity(dz), avz=vyaw)
+
+        
 
     def arm(self):
         """
@@ -201,11 +204,12 @@ class Behavior():
         # self.c.land()
 
     def search(self):
-        self.c.goto_position_by_vel(0,      0,          3,  0.2)
-        self.c.goto_position_by_vel(15,     0,          3,  0.2)
-        self.c.goto_position_by_vel(15,     -10,        3,  0.2)
-        self.c.goto_position_by_vel(5,      -10,        3,  0.2)
-        self.c.goto_position_by_vel(0,      0,          3,  0.2)
+        rotation_speed = 0.2
+        self.c.go_to_position_by_vel(0,      0,          3,  0)
+        self.c.go_to_position_by_vel(15,     0,          3,  rotation_speed)
+        self.c.go_to_position_by_vel(15,     -10,        3,  rotation_speed)
+        self.c.go_to_position_by_vel(5,      -10,        3,  rotation_speed)
+        self.c.go_to_position_by_vel(0,      0,          3,  rotation_speed)
 
         
 

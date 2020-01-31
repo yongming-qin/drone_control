@@ -250,6 +250,7 @@ void YoloObjectDetector::callback(const sensor_msgs::Image::ConstPtr& image,
               // Message
               balloonPosition.Class = classLabels_[j];
               balloonPosition.probability = dets[i].prob[j];
+              balloonPosition.distance_to_drone = sqrt(pow(centroid_[0],2) + pow(centroid_[1],2) + pow(centroid_[2],2));
               balloonPosition.point = pointStampedMap.point;
               balloonPositionsResults_.balloon_positions.push_back(balloonPosition);
             }
