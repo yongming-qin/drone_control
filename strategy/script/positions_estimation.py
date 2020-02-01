@@ -21,6 +21,8 @@ from darknet_ros_msgs.msg import BalloonPositions
 from mavros_msgs.msg import PositionTarget
 from mavros_msgs.srv import SetMode, CommandBool, CommandTOL
 
+from strategy.srv import ChangeState
+
 class MavController:
     def __init__(self):
         rospy.init_node("mav_control_node", anonymous=True)
@@ -37,6 +39,16 @@ class MavController:
         self.mode_service = rospy.ServiceProxy("/mavros/set_mode", SetMode)
         self.arm_service = rospy.ServiceProxy("/mavros/cmd/arming", CommandBool)
         self.takeoff_service = rospy.ServiceProxy("/mavros/cmd/takeoff", CommandTOL)
+
+        #QIN Change the state of the controller
+        rospy.wait_for_service("change_state")
+        try:
+            self.change_state = rospy.ServiceProxy("change_state", ChangeState)
+            resp = self.change_state("search")
+            print("Service change_state call result: ", resp.result)
+        except rospy.ServiceException, e:
+            print("Service call failed: ", e)
+
 
         self.pose = Pose()
         self.timestamp = rospy.Time()
@@ -86,10 +98,11 @@ class MavController:
         
         self.count += 1
         # print(len(self.points))
+        publish_count_threshold = 8
         if self.count % 20 == 1:
             for idx, point in enumerate( sorted(self.points, key=lambda val: val["count"], reverse=True) ):
                 print("count: " + str(point["count"]), point["point"])
-                if point["count"] > 8:
+                if point["count"] >= publish_count_threshold:
                     # print(point["count"], "\t", point["point"])
                     #QIN Only the point with the most count will be published
                     if idx == 0:
@@ -100,13 +113,14 @@ class MavController:
                         position.vector.z = self.points[0]["point"][2]
                         self.position_pub.publish(position)
             print("----------------------------------------------")
-        if self.count % 100 == 1:
-            self.points = []
+        if self.count % 100 == 1 and len(self.points) >= 1:
+            self.points = self.points[0:1]
+            self.points[0]["count"] = publish_count_threshold
         
 
     def ignore_point(self, point, distance_to_drone):
         # Check if the balloon is already visited TODO: not for real competition
-        threshold = 2
+        threshold = 3
         for p in self.popped_positions:
             if self.distance_points(p, point) < threshold:
                 return True

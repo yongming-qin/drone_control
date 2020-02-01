@@ -15,10 +15,11 @@ from geometry_msgs.msg import Pose, PoseStamped, Twist, Quaternion
 from geometry_msgs.msg import Point, Vector3Stamped
 from mavros_msgs.msg import PositionTarget
 
-
 from mavros_msgs.srv import SetMode
 from mavros_msgs.srv import CommandBool
 from mavros_msgs.srv import CommandTOL
+
+from strategy.srv import ChangeState, ChangeStateResponse
 
 import math
 
@@ -42,12 +43,29 @@ class MavController:
         self.arm_service = rospy.ServiceProxy("/mavros/cmd/arming", CommandBool)
         self.takeoff_service = rospy.ServiceProxy("/mavros/cmd/takeoff", CommandTOL)
 
+        self.change_state_service = rospy.Service("change_state", ChangeState, self.change_state)
+
         self.pose = Pose()
         self.angles = [0, 0, 0]
         self.timestamp = rospy.Time()
 
+        self.STATE = "idle"
+        # [x,y,z,vz], vz = rotation_speed
+        height = 3
+        self.route = [[0,0,height], [35,0,height], [35,-10,height],\
+                      [5,-10,height],[5,-20,height],\
+                      [35,-20,height],[35,-30,height],\
+                      [5,-30,height],[5,-40,height],\
+                      [35,-40,height],\
+                      [0,0,height]]
+
         while not rospy.is_shutdown():
             pass
+
+    def change_state(self, req):
+        self.STATE = req.state
+        return ChangeStateResponse("processed")
+
 
     def goto_raw(self, x, y, z):
         cmd_raw = PositionTarget()
@@ -94,11 +112,28 @@ class MavController:
        
         self.angles = tf.transformations.euler_from_quaternion([msg_orientation.x,msg_orientation.y,msg_orientation.z,msg_orientation.w])
 
+        rospy.loginfo("state: %s", self.STATE)
         rospy.loginfo("pose: %f, %f, %f, %f, %f, %f",
                 self.pose.position.x, self.pose.position.y, self.pose.position.z,
                 self.angles[0], self.angles[1], self.angles[2])
 
+        # Search the balloons
+        if self.STATE == "search":
+            if len(self.route) >= 1:
+                if self.go_to_position_nonholonomic(self.route[0][0], self.route[0][1], self.route[0][2]):
+                    del self.route[0]
+            else:
+                print("Search Finished, visited all the waypoints")
+        
+
+
     def approach_callback(self, msg):
+        if self.STATE != "approach":
+            return
+        x = msg.vector.x; y = msg.vector.y; z = msg.vector.z
+        self.go_to_position_nonholonomic(x, y, z)
+
+    def go_to_position_nonholonomic(self, x, y, z):
         reach_radius = 0.5
         def angle_difference(direction, direction_goal):
             dif = direction - direction_goal
@@ -128,9 +163,9 @@ class MavController:
             else:
                 return(0)
 
-        dx = msg.vector.x - self.pose.position.x
-        dy = msg.vector.y - self.pose.position.y
-        dz = msg.vector.z - self.pose.position.z
+        dx = x - self.pose.position.x
+        dy = y - self.pose.position.y
+        dz = z - self.pose.position.z
         distance = math.sqrt(math.pow(dx,2) + math.pow(dy,2))
         sin_direction = dy / distance
         cos_direction = dx / distance
@@ -141,35 +176,31 @@ class MavController:
 
         if (math.fabs(dx) < reach_radius and math.fabs(dy) < reach_radius and math.fabs(dz) < reach_radius):
             self.set_vel(0, 0, 0, avz=0)
+            return(True)
         else:
-            #TODO TODO Disable z velocity. linear_vel(dz)
-            self.set_vel(linear_vel(dx), linear_vel(dy), 0, avz=angular_vel(error_direction))
+            #DEBUG: for test
+            self.set_vel(linear_vel(dx), linear_vel(dy), linear_vel(dz), avz=angular_vel(error_direction))
+            return(False)
 
-
-
-
-    def go_to_position_by_vel(self, x, y, z, vyaw):
-        return(0)
+    def go_to_position_holonomic(self, x, y, z, vyaw=0):
         reach_radius = 0.5
-        while not rospy.is_shutdown():
-            dx = x - self.pose.position.x
-            dy = y - self.pose.position.y
-            dz = z - self.pose.position.z
-            if (math.fabs(dx) < reach_radius and math.fabs(dy) < reach_radius and math.fabs(dz) < reach_radius):
-                self.set_vel(0, 0, 0, avz=0)
-                break
-            def velocity(input):
-                k = 0.5
-                limit = 1
-                if math.fabs(input) >= reach_radius:
-                    output = k*input if math.fabs(k*input) < limit else math.copysign(limit,k*input)
-                    # print("velocity: ", output)
-                    return(output)
-                else:
-                    return 0
+        dx = x - self.pose.position.x
+        dy = y - self.pose.position.y
+        dz = z - self.pose.position.z
+        if (math.fabs(dx) < reach_radius and math.fabs(dy) < reach_radius and math.fabs(dz) < reach_radius):
+            self.set_vel(0, 0, 0, avz=0)
+            return
 
-            self.set_vel(velocity(dx), velocity(dy), velocity(dz), avz=vyaw)
-
+        def velocity(input):
+            k = 0.5
+            limit = 1
+            if math.fabs(input) >= reach_radius:
+                output = k*input if math.fabs(k*input) < limit else math.copysign(limit,k*input)
+                # print("velocity: ", output)
+                return(output)
+            else:
+                return(0)
+        self.set_vel(velocity(dx), velocity(dy), velocity(dz), avz=vyaw)
         
 
     def arm(self):
@@ -264,11 +295,11 @@ class Behavior():
 
     def search(self):
         rotation_speed = 0.2
-        self.c.go_to_position_by_vel(0,      0,          3,  0)
-        self.c.go_to_position_by_vel(15,     0,          3,  rotation_speed)
-        self.c.go_to_position_by_vel(15,     -10,        3,  rotation_speed)
-        self.c.go_to_position_by_vel(5,      -10,        3,  rotation_speed)
-        self.c.go_to_position_by_vel(0,      0,          3,  rotation_speed)
+        self.c.go_to_position_holonomic(0,      0,          3,  0)
+        self.c.go_to_position_holonomic(15,     0,          3,  rotation_speed)
+        self.c.go_to_position_holonomic(15,     -10,        3,  rotation_speed)
+        self.c.go_to_position_holonomic(5,      -10,        3,  rotation_speed)
+        self.c.go_to_position_holonomic(0,      0,          3,  rotation_speed)
 
         
 

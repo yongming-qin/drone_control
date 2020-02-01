@@ -19,11 +19,11 @@
 		<arg name="gcs_url" value="$(arg gcs_url)" />
 		<arg name="tgt_system" value="$(arg tgt_system)" />
 		<arg name="tgt_component" value="$(arg tgt_component)" />
-		<arg name="log_output" value="$(arg log_output)" />
+		<arg name="log_output" value="$(arg log_output)" />	
 		<arg name="fcu_protocol" value="$(arg fcu_protocol)" />
 		<arg name="respawn_mavros" default="$(arg respawn_mavros)" />
 	</include>
 
 	<!-- zed camera. period_in_ms  -->
-	<node pkg="tf" name="attach_zed_to_base_link" type="static_transform_publisher" args="0.1 0 -0.1 0 0 0 base_link zed_base_link 1"/>
+	<node pkg="tf" name="attach_zed_to_base_link" type="static_transform_publisher" args="0.15 0 -0.18 0 0 0 base_link zed_base_link 1"/>
 </launch>
