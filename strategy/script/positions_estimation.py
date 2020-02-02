@@ -46,7 +46,7 @@ class MavController:
             self.change_state = rospy.ServiceProxy("change_state", ChangeState)
             resp = self.change_state("search")
             print("Service change_state call result: ", resp.result)
-        except rospy.ServiceException, e:
+        except rospy.ServiceException as e:
             print("Service call failed: ", e)
 
 
