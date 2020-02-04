@@ -19,10 +19,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 <launch>
     <arg name="svo_file"             default="" /> <!-- <arg name="svo_file" default="path/to/svo/file.svo"> -->
     <arg name="stream"               default="" /> <!-- <arg name="stream" default="<ip_address>:<port>"> -->
-
     <arg name="node_name"            default="zed_node" />
     <arg name="camera_model"         default="zedm" /> <!-- 'zed' or 'zedm' -->
     <arg name="publish_urdf"         default="true" />
+
+    <!-- Disable TF publishing -->
+    <arg name="publish_tf"           default="false" />
+    <arg name="publish_map_tf"       default="false" />
 
     <group ns="zed">
         <include file="$(find zed_wrapper)/launch/drone_zed_camera.launch">
@@ -31,6 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             <arg name="node_name"           value="$(arg node_name)" />
             <arg name="camera_model"        value="$(arg camera_model)" />
             <arg name="publish_urdf"        value="$(arg publish_urdf)" />
+            <arg name="publish_tf"          value="$(arg publish_tf)" />
+            <arg name="publish_map_tf"      value="$(arg publish_map_tf)" />
         </include>
     </group>
 </launch>

@@ -41,13 +41,14 @@ class MavController:
         self.takeoff_service = rospy.ServiceProxy("/mavros/cmd/takeoff", CommandTOL)
 
         #QIN Change the state of the controller
-        rospy.wait_for_service("change_state")
-        try:
-            self.change_state = rospy.ServiceProxy("change_state", ChangeState)
-            resp = self.change_state("search")
-            print("Service change_state call result: ", resp.result)
-        except rospy.ServiceException as e:
-            print("Service call failed: ", e)
+        if False:
+            rospy.wait_for_service("change_state")
+            try:
+                self.change_state = rospy.ServiceProxy("change_state", ChangeState)
+                resp = self.change_state("search")
+                print("Service change_state call result: ", resp.result)
+            except rospy.ServiceException as e:
+                print("Service call failed: ", e)
 
 
         self.pose = Pose()

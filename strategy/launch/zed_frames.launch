@@ -1,0 +1,12 @@
+<launch>
+
+    <!-- zed camera. period_in_ms  -->
+    <node pkg="tf" name="attach_zed_to_base_link" type="static_transform_publisher" args="0.1 0 -0.1 0 0 0 base_link zed_base_link 10" output="screen"/>
+    <!-- heading frame, only yaw changes with the drone -->
+    <node pkg="strategy" name="add_heading_frame" type="add_heading_frame.py" output="screen"/>
+
+    <!-- control node-->
+    <node pkg="strategy" name="approach" type="approach.py" output="screen"/>
+    <node pkg="strategy" name="positions_estimation" type="positions_estimation.py" output="screen"/>
+
+</launch>

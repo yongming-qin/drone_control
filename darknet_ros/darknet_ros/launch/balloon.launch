@@ -3,6 +3,7 @@
 <launch>
   <!-- Parameters of balloon detection -->
   <arg name="darknet_debug" default="false" />
+  <arg name="balloon_frame" default="/map" />
   <arg name="n_points" default="20" />
   <arg name="lookup_limits" default="10" />
   <arg name="in_box_scale" default="0.8" />

@@ -154,6 +154,7 @@ class YoloObjectDetector
   tf::TransformListener tf_;
 
   //QIN Balloon detection parameters
+  std::string balloonFrame_;
   int nPoints_;
   int lookupLimits_;
   float inBoxScale_; // A samller rectangle in the box. scale <= 1

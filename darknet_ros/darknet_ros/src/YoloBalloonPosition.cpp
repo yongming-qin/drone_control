@@ -66,6 +66,7 @@ void YoloObjectDetector::init()
   float thresh; // Threshold of object detection.
   nodeHandle_.param("yolo_model/threshold/value", thresh, (float) 0.3);
 
+  nodeHandle_.param("balloon_frame", balloonFrame_, std::string("/map"));
   nodeHandle_.param("n_points", nPoints_, 20);
   nodeHandle_.param("lookup_limits", lookupLimits_, 10);
   nodeHandle_.param("in_box_scale", inBoxScale_, (float) 0.8);
@@ -236,7 +237,7 @@ void YoloObjectDetector::callback(const sensor_msgs::Image::ConstPtr& image,
               pointStamped.point.y = centroid_[1];
               pointStamped.point.z = centroid_[2];
               for (int i = 0; i < lookupLimits_; ++i) { //QIN
-                try {tf_.transformPoint("/map", pointStamped, pointStampedMap);}
+                try {tf_.transformPoint(balloonFrame_, pointStamped, pointStampedMap);}
                 catch (tf::TransformException &ex) {
                   // ROS_INFO_STREAM(ex.what() << "\n" << i);
                   ROS_INFO_STREAM("lookup: " << i);
