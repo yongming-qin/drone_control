@@ -46,7 +46,7 @@ class MavController:
             self.change_state = rospy.ServiceProxy("change_state", ChangeState)
             resp = self.change_state("search")
             print("Service change_state call result: ", resp.result)
-        except rospy.ServiceException as e:
+        except rospy.ServiceException, e:
             print("Service call failed: ", e)
 
 
@@ -138,8 +138,8 @@ class MavController:
 
     def distance_points(self, point1, point2):
         return sqrt( pow((point1[0] - point2[0]), 2) + \
-                     pow((point1[1] - point2[1]), 2) ) #TODO + \
-                    #  pow((point1[2] - point2[2]), 2) )
+                     pow((point1[1] - point2[1]), 2) + \
+                     pow((point1[2] - point2[2]), 2) )
 
     def update_point(self, old_point, new_point):
         old_point[0] += 0.2 * (new_point[0] - old_point[0])

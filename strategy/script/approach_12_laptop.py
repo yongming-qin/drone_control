@@ -58,6 +58,7 @@ class MavController:
                       [5,-30,height],[5,-40,height],\
                       [35,-40,height],\
                       [0,0,height]]
+        self.count = 0
 
         while not rospy.is_shutdown():
             pass
@@ -119,13 +120,15 @@ class MavController:
 
         # Search the balloons
         if self.STATE == "search":
-            if len(self.route) >= 1:
-                if self.go_to_position_nonholonomic(self.route[0][0], self.route[0][1], self.route[0][2]):
-                    del self.route[0]
+            self.count += 1
+            if self.count % 20 == 1:
+                if len(self.route) >= 1:
+                    if self.go_to_position_nonholonomic(self.route[0][0], self.route[0][1], self.route[0][2]):
+                        del self.route[0]
+                    else:
+                        print("goal: ", route[0])
                 else:
-                    print("goal: ", self.route[0])
-            else:
-                print("Search Finished, visited all the waypoints")
+                    print("Search Finished, visited all the waypoints")
         
 
 
@@ -176,13 +179,13 @@ class MavController:
         error_direction = angle_difference(direction, self.angles[2])
         print("error_direction: ", error_direction)
 
-        if (math.fabs(dx) < reach_radius and math.fabs(dy) < reach_radius):
+        # if (math.fabs(dx) < reach_radius and math.fabs(dy) < reach_radius and math.fabs(dz) < reach_radius):
+        if (math.fabs(dx) < reach_radius and math.fabs(dy) < reach_radius:
             self.set_vel(0, 0, 0, avz=0)
             return(True)
         else:
             #DEBUG: for test
             # self.set_vel(linear_vel(dx), linear_vel(dy), linear_vel(dz), avz=angular_vel(error_direction))
-            
             self.set_vel(linear_vel(dx), linear_vel(dy), 0, avz=angular_vel(error_direction))
             return(False)
 
